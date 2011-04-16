@@ -12,6 +12,8 @@ public class server_Main {
     private clientListStore clientListStore;
     //store all the online user
     private clientList clientList;
+    //store all the user who no join the room
+    private clientList noRoomClientList;
     //time
     String DATE_FORMAT = " kk:mm, dd/MM/yyyy...";
     SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
@@ -28,7 +30,9 @@ public class server_Main {
         System.out.println("Users List Store Created...");
         clientList = new clientList("/Main",nowtime);
         System.out.println("User List Created...");
-        new server_Accept(serverSocket, clientListStore, clientList);
+        clientList = new clientList("/noRoomUser",nowtime);
+        System.out.println("no room user List Created...");
+        //new server_Accept(serverSocket, clientListStore, clientList, noRoomClientList);
         System.out.println("Ready to accept user...");
         clientList.insertClientToTheFirst("LELELE");
         clientList.insertClientToTheFirst("LALALA");

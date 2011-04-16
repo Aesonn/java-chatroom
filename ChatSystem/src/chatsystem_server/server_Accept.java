@@ -10,11 +10,13 @@ public class server_Accept extends Thread {
     private Socket socket;
     private clientListStore clientListStore;
     private clientList clientList;
+    private clientList noRoomClientList;
 
-    public server_Accept(ServerSocket ss, clientListStore cls, clientList cl) {
+    public server_Accept(ServerSocket ss, clientListStore cls, clientList cl, clientList cl2) {
         this.serverSocket = ss;
         this.clientListStore = cls;
         this.clientList = cl;
+        this.noRoomClientList = cl2;
     }
 
 //*****************************************accept all user************************************************************************************************
@@ -23,7 +25,7 @@ public class server_Accept extends Thread {
         while (true) {
             try {
                 socket = serverSocket.accept();
-                new server_Process(socket, clientListStore, clientList);
+                //new server_Process(socket, clientListStore, clientList, noRoomClientList);
             } catch (IOException ex) {
                 ex.printStackTrace();
             }

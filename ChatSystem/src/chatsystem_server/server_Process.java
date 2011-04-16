@@ -22,6 +22,7 @@ public class server_Process extends Thread implements Opcode{
     //storage
     private clientListStore clientListStore;
     private clientList clientList;
+    private clientList noRoomClientList;
     //packets
     private packet_request request;
     private packet_loginData loginDATA;
@@ -37,10 +38,11 @@ public class server_Process extends Thread implements Opcode{
     private static Connection connection;
     private Statement sql;
 
-    public server_Process(Socket s, clientListStore uls, clientList ul) throws IOException {
+    public server_Process(Socket s, clientListStore cls, clientList cl, clientList cl2) throws IOException {
         this.socket = s;
-        this.clientListStore = uls;
-        this.clientList = ul;
+        this.clientListStore = cls;
+        this.clientList = cl;
+        this.clientList = cl2;
         this.clientInput = new ObjectInputStream(socket.getInputStream());
         this.clientOutput = new ObjectOutputStream(socket.getOutputStream());
 
@@ -99,6 +101,7 @@ public class server_Process extends Thread implements Opcode{
                              time = sdf.format(c1.getTime());
                              //if true create client and add client into clientList, this clientList is store all online client
                              clientList.insertClientToTheFirst(loginDATA.getUsername(), time, clientOutput);
+                             noRoomClientList.insertClientToTheFirst(loginDATA.getUsername(), time, clientOutput);
                              //send success message to the client
                              this.clientOutput.writeObject(new packet_systemMessage(SMSG_LOGIN_SUCCESS));
 
@@ -124,6 +127,10 @@ public class server_Process extends Thread implements Opcode{
                      if(current.removeClient(name)!=null)
                      {
                          current.removeClient(name);
+                     }
+                     else
+                     {
+                         noRoomClientList.removeClient(name);
                      }
                      //close all connection
                      this.clientOutput.close();
