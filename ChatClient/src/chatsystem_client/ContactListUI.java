@@ -4,9 +4,10 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.util.ListIterator;
 import java.util.Vector;
+import packets.Opcode;
 
-import Core.*;
-import UI.ChatUI;
+//import Core.*;
+//import UI.ChatUI;
 
 public class ContactListUI extends JFrame implements Runnable, Opcode
 {
@@ -22,7 +23,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
 
     String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
 
-    static Vector<ChatUI> chatWindow;
+    //static Vector<ChatUI> chatWindow;
 
     public ContactListUI(String name, String psm, JFrame loginFrame)
     {
@@ -56,11 +57,11 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
         setVisible(true);
         loginFrame.dispose();
 
-        chatWindow = new Vector<ChatUI>();
+        //chatWindow = new Vector<ChatUI>();
 
-        addWindowListener(winListener);
-        contactList.addMouseListener(mouseListener);
-        cStatus.addActionListener(actListener);
+    //    addWindowListener(winListener);
+   //     contactList.addMouseListener(mouseListener);
+  //      cStatus.addActionListener(actListener);
     }
 
     public void exit()
@@ -69,6 +70,7 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
         //Main.m_session.flush();
 
         //close all existing ChatUI
+        /*
         for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
         {
             ChatUI ui = i.next();
@@ -79,6 +81,8 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
 
         System.exit(0);
     }
+         * 
+         */
 
     // Direct adding Contact instance, Contact.java toString() method show the correct contact detail instead of instance memory location.
     /*
@@ -155,8 +159,10 @@ public class ContactListUI extends JFrame implements Runnable, Opcode
             }
         };
 
+    }
+
     @Override
     public void run() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    }
+}

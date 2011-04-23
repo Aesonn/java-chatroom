@@ -1,2 +1,4 @@
 *.class
 build
+/ChatSystem/nbproject/private/
+/ChatClient/nbproject/private/

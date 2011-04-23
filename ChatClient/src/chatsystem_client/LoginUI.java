@@ -1,7 +1,10 @@
 package chatsystem_client;
 
+import java.awt.Color;
 import javax.swing.*;
 import java.awt.event.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 
 public class LoginUI extends JFrame implements ActionListener
 {
@@ -34,14 +37,25 @@ public class LoginUI extends JFrame implements ActionListener
         add(btnReg);
         add(btnExit);
 
-        lblPassword.setBounds(30,250,100,25);
-        lblUsername.setBounds(30,180,100,25);
-        txtPassword.setBounds(30,270,220,25);
-        txtUsername.setBounds(30,200,220,25);
-        btnLogin.setBounds(90,300,100,25);
-        btnReg.setBounds(30,420,100,25);
-        btnExit.setBounds(150, 420, 100, 25);
+        lblPassword.setBounds(110,220,100,25);
+        lblUsername.setBounds(110,150,100,25);
+        txtPassword.setBounds(40,240,220,25);
+        txtUsername.setBounds(40,170,220,25);
+        btnLogin.setBounds(120,320,60,25);
+        btnReg.setBounds(50,370,60,25);
+        btnExit.setBounds(180, 370, 60, 25);
+        
+        Border thickBorder = new LineBorder(new Color (250, 100, 100, 0));
+        
+        btnLogin.setBackground(new Color (250, 100, 100, 200));
+        btnLogin.setBorder(thickBorder);
+        btnReg.setBackground(new Color (250, 100, 100, 200));
+        btnReg.setBorder(thickBorder);
+        btnExit.setBackground(new Color (250, 100, 100, 200));
+        btnExit.setBorder(thickBorder);
 
+        
+        
         btnLogin.addActionListener(this);
         btnReg.addActionListener(this);
         btnExit.addActionListener(this);

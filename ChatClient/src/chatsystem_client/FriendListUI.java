@@ -1,6 +1,5 @@
 package chatsystem_client;
 
-import UI.*;
 import java.io.IOException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -8,7 +7,6 @@ import javax.swing.*;
 import java.awt.event.*;
 import java.io.ObjectOutputStream;
 import packets.Opcode;
-import packets.packet_request;
 
 public class FriendListUI extends JFrame implements Opcode
 {
