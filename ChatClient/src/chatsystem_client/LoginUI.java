@@ -3,75 +3,83 @@ package chatsystem_client;
 import java.awt.Color;
 import javax.swing.*;
 import java.awt.event.*;
+import java.awt.geom.Ellipse2D;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 
 public class LoginUI extends JFrame implements ActionListener
 {
-    JButton btnLogin, btnExit, btnReg;
-    JTextField txtUsername;
-    JPasswordField txtPassword;
-    JLabel lblUsername,lblPassword;
-    Connection connection = new Connection();
     static String clientName;
+    static roomList roomList;
+    Connection connection;
+    
+    //UI components
+    JButton buttonLogin, buttonExit, buttonReg;
+    JLabel labelUsername, labelPassword;
+    JTextField textUsername;
+    JPasswordField textPassword;
 
-    public LoginUI(String name)
+    public LoginUI(String name, roomList roomList)
     {
-        this.clientName = name;
+
+        clientName = name;
+        this.roomList   = roomList;
+        connection = new Connection();
+        
         setTitle("Login Form");
         setLayout(null);
+        setUndecorated(true);        
+        setSize(300, 500);
+        setBackground(new Color (10, 10, 10, 230));
 
-        lblUsername = new JLabel("Username");
-        lblPassword = new JLabel("Password");
-        txtUsername = new JTextField();
-        txtPassword = new JPasswordField();
-        btnLogin = new JButton("Login");
-        btnReg = new JButton("Register");
-        btnExit = new JButton("Exit");
+        buttonLogin   = new JButton("Login");
+        buttonReg     = new JButton("Register");
+        buttonExit    = new JButton("Exit");
+        labelUsername = new JLabel("Username");
+        labelPassword = new JLabel("Password");
+        textUsername  = new JTextField();
+        textPassword  = new JPasswordField();
 
-        add(lblPassword);
-        add(lblUsername);
-        add(txtPassword);
-        add(txtUsername);
-        add(btnLogin);
-        add(btnReg);
-        add(btnExit);
+        add(buttonLogin);
+        add(buttonReg);
+        add(buttonExit);
+        add(labelUsername);
+        add(labelPassword);
+        add(textUsername);
+        add(textPassword);
 
-        lblPassword.setBounds(110,220,100,25);
-        lblUsername.setBounds(110,150,100,25);
-        txtPassword.setBounds(40,240,220,25);
-        txtUsername.setBounds(40,170,220,25);
-        btnLogin.setBounds(120,320,60,25);
-        btnReg.setBounds(50,370,60,25);
-        btnExit.setBounds(180, 370, 60, 25);
+        buttonLogin.setBounds(100,320,90,25);
+        buttonReg.setBounds(30,370,90,25);
+        buttonExit.setBounds(160, 370, 90, 25);
+        labelUsername.setBounds(40,150,100,25);
+        labelPassword.setBounds(40,220,100,25);
+        textUsername.setBounds(40,170,220,25);
+        textPassword.setBounds(40,240,220,25);
         
-        Border thickBorder = new LineBorder(new Color (250, 100, 100, 0));
+        Border b = new LineBorder(new Color (250, 100, 100, 0));
         
-        btnLogin.setBackground(new Color (250, 100, 100, 200));
-        btnLogin.setBorder(thickBorder);
-        btnReg.setBackground(new Color (250, 100, 100, 200));
-        btnReg.setBorder(thickBorder);
-        btnExit.setBackground(new Color (250, 100, 100, 200));
-        btnExit.setBorder(thickBorder);
+        labelUsername.setForeground(new Color (250, 0, 0, 255));
+        labelPassword.setForeground(new Color (250, 0, 0, 255));
 
         
         
-        btnLogin.addActionListener(this);
-        btnReg.addActionListener(this);
-        btnExit.addActionListener(this);
+        buttonLogin.addActionListener(this);
+        buttonReg.addActionListener(this);
+        buttonExit.addActionListener(this);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e)
     {
-        if (e.getSource().equals(btnLogin))
+        if (e.getSource().equals(buttonLogin))
         {
-            if (txtUsername.getText().equals(""))
+            if (textUsername.getText().equals(""))
             {
                 JOptionPane.showMessageDialog(this, "Please enter your username.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
             }
 
-            if (txtPassword.getPassword().length == 0)
+            if (textPassword.getPassword().length == 0)
             {
                 JOptionPane.showMessageDialog(this, "Please enter your password.", "Error", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -79,22 +87,32 @@ public class LoginUI extends JFrame implements ActionListener
 
             try
             {
-                connection.connect(txtUsername.getText(), new String(txtPassword.getPassword()), this);
+                int respondCode = connection.connect(textUsername.getText(), new String(textPassword.getPassword()), this, roomList);
+                if(respondCode==0)
+                {
+                    JOptionPane.showMessageDialog(this, "Login failed.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+                else if(respondCode==2)
+                {
+                    JOptionPane.showMessageDialog(this, "Your already logon at another computer.", "Error", JOptionPane.ERROR_MESSAGE);
+                    return;   
+                }
             }catch(Exception ex){}
         }
 
-        if (e.getSource().equals(btnExit))
+        if (e.getSource().equals(buttonExit))
         {
             System.exit(0);
         }
 
-        if (e.getSource().equals(btnReg))
+        if (e.getSource().equals(buttonReg))
         {
                     //new chatUI("o0o1");
         }
     }
 
     public void loginSuccess(){
-        new FriendListUI("yaya", "yoyo", this, null);
+        new FriendListUI(clientName, this, null, roomList);
     }
 }

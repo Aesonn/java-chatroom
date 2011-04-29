@@ -1,168 +1,146 @@
 package chatsystem_client;
 
+import java.awt.Color;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.*;
 import java.awt.event.*;
-import java.util.ListIterator;
-import java.util.Vector;
+import java.io.ObjectOutputStream;
 import packets.Opcode;
+import packets.packet_newRoom;
 
 //import Core.*;
 //import UI.ChatUI;
 
-public class ContactListUI extends JFrame implements Runnable, Opcode
+public class CreateRoomUI extends JFrame implements Opcode, ActionListener
 {
-    JComboBox cStatus;
-    JList contactList;
-    JScrollPane contactListPane;
+    JLabel labelRoomname, labelDescription, labelQuestion, labelAnswer;
+    JTextField textRoomname, textDescription, textQuestion, textAnswer;
+    JButton buttonCreate, buttonBack;
+    
+    private ObjectOutputStream out;
 
-    JLabel lblName;
-    JLabel lblPSM;
-    JLabel lblFList;
-
-    DefaultListModel model;
-
-    String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
-
-    //static Vector<ChatUI> chatWindow;
-
-    public ContactListUI(String name, String psm, JFrame loginFrame)
+    public CreateRoomUI(ObjectOutputStream out)
     {
-        setTitle(String.format("%s - %s", name, psm));
+        this.out = out;
+        
+        setTitle("Create Room");
         setLayout(null);
+        setUndecorated(true);        
+        setSize(300, 500);
+        setBackground(new Color (10, 10, 10, 230));
+        
+        labelRoomname    = new JLabel("Room Name");
+        labelDescription = new JLabel("Description");
+        labelQuestion    = new JLabel("Question");
+        labelAnswer      = new JLabel("Answer");
+        textRoomname     = new JTextField();
+        textDescription  = new JTextField();
+        textQuestion     = new JTextField();
+        textAnswer       = new JTextField();
+        buttonCreate     = new JButton("Create");
+        buttonBack       = new JButton("Back");
+        
+        add(labelRoomname);
+        add(labelDescription);
+        add(labelQuestion);
+        add(labelAnswer);
+        add(textRoomname);
+        add(textDescription);
+        add(textQuestion);
+        add(textAnswer);
+        add(buttonCreate);
+        add(buttonBack);
+        
+        labelRoomname.setBounds(40,80,100,25);
+        labelDescription.setBounds(40,150,100,25);
+        labelQuestion.setBounds(40,220,100,25);
+        labelAnswer.setBounds(40,290,100,25);
+        textRoomname.setBounds(40,100,220,25);
+        textDescription.setBounds(40,170,220,25);
+        textQuestion.setBounds(40,240,220,25);
+        textAnswer.setBounds(40,310,220,25);
+        buttonCreate.setBounds(50, 400, 80, 25);
+        buttonBack.setBounds(170, 400, 80, 25);
+        
+        labelRoomname.setForeground(new Color (250, 0, 0, 255));
+        labelDescription.setForeground(new Color (250, 0, 0, 255));
+        labelQuestion.setForeground(new Color (250, 0, 0, 255));
+        labelAnswer.setForeground(new Color (250, 0, 0, 255));
 
-        lblName = new JLabel(name);
-        lblPSM = new JLabel(psm);
-
-        cStatus = new JComboBox(status);
-
-        model = new DefaultListModel();
-        contactList = new JList(model);
-        contactListPane = new JScrollPane(contactList);
-
-        add(lblName);
-        add(lblPSM);
-        add(cStatus);
-        add(contactListPane);
-
-        lblName.setBounds(15, 10, 245, 25);
-        lblPSM.setBounds(15, 35, 245, 25);
-        cStatus.setBounds(10, 65, 245, 25);
-        contactListPane.setBounds(10, 100, 245, 360);
-
-
-        setSize(270, 500);
-        setResizable(false);
-        setLocationRelativeTo(loginFrame);
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setVisible(true);
-        loginFrame.dispose();
-
-        //chatWindow = new Vector<ChatUI>();
-
-    //    addWindowListener(winListener);
-   //     contactList.addMouseListener(mouseListener);
-  //      cStatus.addActionListener(actListener);
+        buttonCreate.addActionListener(this);
+        buttonBack.addActionListener(this);
+        addWindowListener(winListener);
     }
 
-    public void exit()
+        WindowListener winListener = new WindowAdapter()
     {
-        //Main.m_session.writeByte(CMSG_LOGOUT);
-        //Main.m_session.flush();
-
-        //close all existing ChatUI
-        /*
-        for (ListIterator<ChatUI> i = chatWindow.listIterator(); i.hasNext(); )
+        @Override
+        public void windowDeactivated(WindowEvent e)
         {
-            ChatUI ui = i.next();
-            ui.dispose();
-        }
-
-        chatWindow = null;
-
-        System.exit(0);
-    }
-         * 
-         */
-
-    // Direct adding Contact instance, Contact.java toString() method show the correct contact detail instead of instance memory location.
-    /*
-     *
-    public void run()
-    {
-        try
-        {
-            Main.m_session.writeByte(CMSG_GET_CONTACT_LIST);
-            Main.m_session.flush();
-
-            byte b;
-
-            while((b = Main.m_session.readByte()) == SMSG_CONTACT_DETAIL)
-            {
-                int guid = Main.m_session.readInt();
-                String cUsername = String.format("%s", Main.m_session.readObject());
-                String cTitle = String.format("%s", Main.m_session.readObject());
-                String cPSM = String.format("%s", Main.m_session.readObject());
-
-                Contact c = new Contact(guid, cUsername, cTitle, cPSM);
-
-                model.addElement(c);
-            }
-
-            if (b != SMSG_CONTACT_LIST_ENDED)
-                JOptionPane.showMessageDialog(this, "Fail to load contact list, your contact list may incomplete.", "Error", JOptionPane.WARNING_MESSAGE);
-        }
-        catch(Exception e){}
-    }
-     *
-     */
-
-    ActionListener actListener = new ActionListener()
-    {
-        public void actionPerformed(ActionEvent e)
-        {
-            if (e.getSource().equals(cStatus))
-            {
-                switch (cStatus.getSelectedIndex())
-                {
-                    case 0: /* Online */
-                        break;
-                    case 1: /* Away */
-                        break;
-                    case 2: /* Busy */
-                        break;
-                    case 3: /* Appear Offline */
-                        break;
-                    case 4: /* Logout */
-                        exit();
-                        break;
-                }
+            try {
+                dispose();
+            } catch (Exception ex) {
+                Logger.getLogger(chatUI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
     };
-
-    WindowListener winListener = new WindowAdapter()
-    {
-        public void windowClosing(WindowEvent e)
-        {
-            exit();
-        }
-    };
-
-    MouseListener mouseListener = new MouseAdapter()
-    {
-        public void mouseClicked(MouseEvent e)
-        {
-            if (e.getClickCount() == 2)
-            {
-
-                }
-            }
-        };
-
-    }
-
+    
     @Override
-    public void run() {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public void actionPerformed(ActionEvent e) {        
+        if (e.getSource().equals(buttonBack))
+        {
+            dispose();
+        }
+        
+        if(e.getSource().equals(buttonCreate))
+        {
+            try {
+                out.writeByte(CMSG_CREATEROOM);
+                out.flush();
+                if(!textRoomname.getText().equals("")&&!textDescription.getText().equals("")&&!textQuestion.getText().equals("")&&!textAnswer.getText().equals(""))
+                {
+                    out.writeObject(new packet_newRoom(textRoomname.getText(), textDescription.getText(), textQuestion.getText(), textAnswer.getText()));
+                    out.flush();     
+                }
+                else if((!textRoomname.getText().equals("")&&!textDescription.getText().equals("")))
+                {
+                    out.writeObject(new packet_newRoom(textRoomname.getText(), textDescription.getText()));
+                    out.flush();     
+                }
+                else
+                {
+                    if(textRoomname.getText().equals(""))
+                    {
+                        JOptionPane.showMessageDialog(this, "Please enter roomname.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    else if(textDescription.getText().equals(""))
+                    {
+                        JOptionPane.showMessageDialog(this, "Please enter description.", "Error", JOptionPane.ERROR_MESSAGE);   
+                    }
+                    else if(textQuestion.getText().equals(""))
+                    {
+                        JOptionPane.showMessageDialog(this, "Please enter question", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                    else if(textAnswer.getText().equals(""))
+                    {
+                        JOptionPane.showMessageDialog(this, "Please enter answer.", "Error", JOptionPane.ERROR_MESSAGE);
+                    }
+                }
+            } catch (Exception ex) {
+                Logger.getLogger(CreateRoomUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
+    
+    public void respondBox(int i){
+        if(i==1)
+        {
+             JOptionPane.showMessageDialog(this, "sucess create room.", "", JOptionPane.INFORMATION_MESSAGE);
+        }
+        else
+        {
+            JOptionPane.showMessageDialog(this, "The room u wish to create already exist.", "Error", JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

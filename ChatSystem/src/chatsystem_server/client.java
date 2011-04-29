@@ -9,7 +9,7 @@ public class client {
     private ObjectOutputStream clientOutput;
     public  client next;
 
-    public client(String name, String time,ObjectOutputStream output){
+    public client(String name, String time, ObjectOutputStream output){
         this.clientName = name;
         this.joinRoomTime = time;
         this.clientOutput = output;

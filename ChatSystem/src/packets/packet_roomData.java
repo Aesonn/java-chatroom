@@ -5,16 +5,19 @@ import java.io.Serializable;
 public class packet_roomData implements Serializable {
 
     private String name;
-    private String password;
-    private String time;
+    private String description;
+    private boolean isPrivate;
 
-    public packet_roomData(String name, String pass){
+    public packet_roomData(String name, String des, boolean isPrivate) {
         this.name = name;
-        this.password = pass;
+        this.description = des;
+        this.isPrivate = isPrivate;
     }
-
-    public boolean isEmpty(){
-        return (name==null);
+    
+    public packet_roomData() {
+        this.name = null;
+        this.description = null;
+        this.isPrivate = false;
     }
 
     /**
@@ -25,37 +28,16 @@ public class packet_roomData implements Serializable {
     }
 
     /**
-     * @param name the name to set
+     * @return the description
      */
-    public void setName(String name) {
-        this.name = name;
+    public String getDescription() {
+        return description;
     }
 
     /**
-     * @return the password
+     * @return the isPrivate
      */
-    public String getPassword() {
-        return password;
-    }
-
-    /**
-     * @param password the password to set
-     */
-    public void setPassword(String password) {
-        this.password = password;
-    }
-
-    /**
-     * @return the time
-     */
-    public String getTime() {
-        return time;
-    }
-
-    /**
-     * @param time the time to set
-     */
-    public void setTime(String time) {
-        this.time = time;
+    public boolean isIsPrivate() {
+        return isPrivate;
     }
 }

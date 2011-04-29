@@ -1,67 +1,77 @@
 package chatsystem_client;
 
-import java.io.IOException;
+import java.awt.Color;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.*;
 import java.awt.event.*;
+import java.awt.geom.Ellipse2D;
+import java.io.IOException;
 import java.io.ObjectOutputStream;
 import packets.Opcode;
 
-public class FriendListUI extends JFrame implements Opcode
+public class FriendListUI extends JFrame implements Opcode, ActionListener
 {
-    JComboBox cStatus;
     JList friendList;
     JScrollPane friendListPane;
+    JButton buttonLogout, buttonCreate;
     
     JLabel lblName;
-    JLabel lblPSM;
-    JLabel lblFList;
     private ObjectOutputStream out;
     JFrame loginFrame;
+    static roomList roomList;
     DefaultListModel model;
     
-    String[] status = {"Online", "Away", "Busy", "Appear Offline", "Logout"};
-    
-    public FriendListUI(String name, String psm, JFrame loginFrame, ObjectOutputStream out)
+    public FriendListUI(String name, JFrame loginFrame, ObjectOutputStream out, roomList roomList)
     {
+        this.roomList = roomList;
         this.out = out;
-        setTitle(String.format("%s - %s", name, psm));
+        setTitle("Room List");
         setLayout(null);
 
         this.loginFrame = loginFrame;
 
+        buttonLogout = new JButton("Logout");
+        buttonCreate= new JButton("Create");
         lblName = new JLabel(name);
-        lblPSM = new JLabel(psm);
         
-        cStatus = new JComboBox(status);
-        
-        model = new DefaultListModel();
-        friendList = new JList(model);
+        friendList = new JList();
         friendListPane = new JScrollPane(friendList);
         
         add(lblName);
-        add(lblPSM);
-        add(cStatus);
         add(friendListPane);
+        add(buttonLogout);
+        add(buttonCreate);
         
-        lblName.setBounds(15, 10, 245, 25);
-        lblPSM.setBounds(15, 35, 245, 25);
-        cStatus.setBounds(10, 65, 245, 25);
-        friendListPane.setBounds(10, 100, 245, 360);
+        buttonLogout.setBounds(25,430,90,25);
+        buttonCreate.setBounds(155,430,90,25);
+        lblName.setBounds(15, 30, 245, 25);
+        lblName.setForeground(new Color (250, 0, 0, 255));
+        friendListPane.setBounds(10, 80, 245, 340);
+        
 
-        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        setLocationRelativeTo(loginFrame);
+        
+        setUndecorated(true);        
+        setBackground(new Color (10, 10, 10, 230));
+        setShape(new Ellipse2D.Float (0, 0, 300,500));
+        
         setSize(270, 500);
         setResizable(false);
+        setLocationRelativeTo(loginFrame);
+        setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         setVisible(true);
         loginFrame.dispose();
         friendList.addMouseListener(mouseListener);
-        addWindowListener(winListener);
+        buttonLogout.addActionListener(this);
+        buttonCreate.addActionListener(this);
     }
 
-    public void updateList(String name){
-        model.addElement(name);
+    public void updateList(){
+        model = new  DefaultListModel();
+        roomList.showList(model);
+        friendList.setModel(model);
+        System.out.println(friendList.isVisible()+" -- "+friendList.isShowing());
+        //friendList.repaint();
     }
 
     MouseListener mouseListener = new MouseAdapter()
@@ -73,10 +83,11 @@ public class FriendListUI extends JFrame implements Opcode
             if (e.getClickCount() == 2)
             {
                 int index = friendList.locationToIndex(e.getPoint());
-                String c =(String)model.getElementAt(index);
-                System.out.println(c);
+                room r =(room)model.getElementAt(index);
+                System.out.println(r);
                 try {
-                    new Connection().joinRoom(out,c);
+                    new Connection().joinRoom(out,r.getName());
+                    new Connection().joinSuccess(r.getName());
                 } catch (IOException ex) {
                     Logger.getLogger(FriendListUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
@@ -84,19 +95,26 @@ public class FriendListUI extends JFrame implements Opcode
         }
     };
 
-    WindowListener winListener = new WindowAdapter()
-    {
-        @Override
-        public void windowClosing(WindowEvent e)
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        if (e.getSource().equals(buttonLogout))
         {
             try {
-                System.out.println("logout!!!!!!!!!!!!");
                 new Connection().logout();
-                //out.writeObject(new packet_request(CMSG_LEAVEROOM, "D073003012B"));
-                //ContactListUI.chatWindow.removeElement((ChatUI)e.getSource());
+                dispose();
+                return;
             } catch (Exception ex) {
-                Logger.getLogger(chatUI.class.getName()).log(Level.SEVERE, null, ex);
+                Logger.getLogger(FriendListUI.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-    };
+        if (e.getSource().equals(buttonCreate))
+        {
+            try {
+                new Connection().createroom();
+                return;
+            } catch (Exception ex) {
+                Logger.getLogger(FriendListUI.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+    }
 }

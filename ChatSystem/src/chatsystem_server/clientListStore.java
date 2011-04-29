@@ -1,9 +1,9 @@
 package chatsystem_server;
 
 import packets.Opcode;
-import packets.packet_systemMessage;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import packets.packet_newRoom;
 import packets.packet_roomData;
 
 public class clientListStore implements Opcode{
@@ -38,14 +38,20 @@ public class clientListStore implements Opcode{
             return false;
     }
 
-    public void insertClientListToTheFirst(String name, String time){
-        clientList newUserList = new clientList(name, time);
-        newUserList.next = first;
-        first = newUserList;
+    public void insertClientListToTheFirst(String name, String des){
+        clientList newClientList = new clientList(name, des);
+        newClientList.next = first;
+        first = newClientList;
+    }
+    
+    public void insertClientListToTheFirst(packet_newRoom newRoom){
+        clientList newClientList = new clientList(newRoom);
+        newClientList.next = first;
+        first = newClientList;
     }
 
-    public void insertClientListToTheFirst(String name, String pass, String time){
-        clientList newUserList = new clientList(name, pass, time);
+    public void insertClientListToTheFirst(String name, String des, String ques, String answ){
+        clientList newUserList = new clientList(name, des, ques, answ);
         newUserList.next = first;
         first = newUserList;
     }
@@ -89,14 +95,22 @@ public class clientListStore implements Opcode{
         return current;
      }
 
-     public void sendAvailableRoom(ObjectOutputStream os) throws IOException{
+     public void sendAvailableRoom(ObjectOutputStream os, Thread t) throws IOException, InterruptedException{
          clientList current = first;
-         os.writeObject(new packet_systemMessage(SMSG_SEND_ROOMLIST));
+         os.writeByte(SMSG_SEND_ROOMLIST);
+         os.flush();
          while(current != null)
          {
-            os.writeObject(new packet_roomData(current.getRoomName(), current.getPassword()));
-            current = current.next;
+             os.writeObject(new packet_roomData(current.getRoomName(), current.getDescription(), (current.getQuestion()!=null)));
+             System.out.println(current.getRoomName()+"---o0o");
+             os.flush();
+             
+             t.sleep(10);
+             
+             current = current.next;
          }
-         os.writeObject(new packet_roomData(null,null));
+         
+         os.writeObject(new packet_roomData());
+         os.flush();
      }
 }

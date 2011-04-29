@@ -15,7 +15,7 @@ public class server_Main {
     //store all the user who no join the room
     private clientList noRoomClientList;
     //time
-    String DATE_FORMAT = " kk:mm, dd/MM/yyyy...";
+    String DATE_FORMAT = "kk:mm:ss, dd/MM/yyyy";
     SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
 
 
@@ -28,18 +28,17 @@ public class server_Main {
         System.out.println("Messenger Server Started...");
         clientListStore = new clientListStore();
         System.out.println("Users List Store Created...");
-        clientList = new clientList("/Main",nowtime);
+        clientList = new clientList("/allClient", null);
         System.out.println("User List Created...");
-        noRoomClientList = new clientList("/noRoomUser",nowtime);
+        noRoomClientList = new clientList("/noRoomClient", null);
         System.out.println("no room user List Created...");
         new server_Accept(serverSocket, clientListStore, clientList, noRoomClientList).start();
+        
         System.out.println("Ready to accept user...");
-        clientListStore.insertClientListToTheFirst("LOL1", nowtime);
-        clientListStore.insertClientListToTheFirst("LOL2", nowtime);
-        clientListStore.insertClientListToTheFirst("LOL3", nowtime);
-        clientListStore.insertClientListToTheFirst("LOL4", nowtime);
-        clientListStore.insertClientListToTheFirst("LOL5", nowtime);
-        clientListStore.insertClientListToTheFirst("LOL6", nowtime);
+        for(int i=1; i<131; i++){
+            clientListStore.insertClientListToTheFirst("LOL"+i, "welcome join room "+i, null, null);
+            System.out.println("LOL"+i);
+        }
     }
 
     public static void main(String[] args) {

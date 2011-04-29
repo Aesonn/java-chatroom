@@ -8,7 +8,7 @@ import java.awt.event.*;
 import java.io.ObjectOutputStream;
 import packets.Opcode;
 import packets.packet_clientMessage;
-import packets.packet_request;
+import packets.packet_newRoom;
 
 
 public class chatUI extends JFrame implements Opcode
@@ -53,9 +53,10 @@ public class chatUI extends JFrame implements Opcode
         setResizable(false);
         setLocationRelativeTo(loginFrame);
         setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        setVisible(true);
         lf.dispose();
 
-        setVisible(true);
+
 
         addWindowListener(winListener);
         txtInput.addKeyListener(keyListener);
@@ -69,7 +70,7 @@ public class chatUI extends JFrame implements Opcode
             try {
                 System.out.println("ChatUI");
                 new Connection().leaveRoom();
-                //out.writeObject(new packet_request(CMSG_LEAVEROOM, "D073003012B"));
+                //out.writeObject(new packet_newRoom(CMSG_LEAVEROOM, "D073003012B"));
                 //ContactListUI.chatWindow.removeElement((ChatUI)e.getSource());
             } catch (Exception ex) {
                 Logger.getLogger(chatUI.class.getName()).log(Level.SEVERE, null, ex);
@@ -95,13 +96,16 @@ public class chatUI extends JFrame implements Opcode
                     return;
                 }
                 try {
-                    out.writeObject(new packet_request(CMSG_SENDGROUPMESSAGE, clientName));
-                    out.writeObject(new packet_clientMessage(clientName,txtInput.getText()));
+                    out.writeByte(MSG_SENDGROUPMESSAGE);
+                    out.flush();
+                    out.writeObject(new packet_clientMessage(clientName,txtInput.getText().trim()));
+                    out.flush();
                 } catch (IOException ex) {
                     Logger.getLogger(chatUI.class.getName()).log(Level.SEVERE, null, ex);
                 }
                 txtInput.setText("");
             }
+                
         }
     };
 }

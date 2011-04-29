@@ -10,7 +10,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import javax.swing.JFrame;
-import javax.swing.JList;
 import packets.*;
 
 /**
@@ -22,20 +21,21 @@ public class Connection extends Thread implements Opcode {
     private Socket socket;
     private ObjectInputStream in;
     private static ObjectOutputStream out;
-    packet_systemMessage systemMSG;
-    JFrame loginFrame;
-    private packet_systemMessage request;
+    private JFrame loginFrame;
     private packet_clientMessage clientMSG;
-    private packet_roomData rd;
-    private FriendListUI lol;
-    private String aa;
+    private FriendListUI friendList;
+    private packet_roomData roomData;
     private chatUI chatUI;
-    static String clientName;
-    static boolean run;
+    private static String clientName;
+    private static String roomName;
+    private static boolean run;
+    private Byte opcode;
+    static roomList roomList;
+    static CreateRoomUI createRoomFrame;
 
-    public Connection(ObjectInputStream in, FriendListUI lol, String name, JFrame jf) {
+    public Connection(ObjectInputStream in, FriendListUI friendList, String name, JFrame jf) {
         this.in = in;
-        this.lol = lol;
+        this.friendList = friendList;
         this.clientName = name;
         this.loginFrame = jf;
         run = true;
@@ -44,27 +44,29 @@ public class Connection extends Thread implements Opcode {
     public Connection() {
     }
 
-    public boolean connect(String name, String pass, JFrame loginFrame) throws UnknownHostException, IOException, ClassNotFoundException {
+    public int connect(String name, String pass, JFrame loginFrame, roomList roomList) throws UnknownHostException, IOException, ClassNotFoundException {
         socket = new Socket("127.0.0.1", 6769);
         out = new ObjectOutputStream(socket.getOutputStream());
-        out.writeObject(new packets.packet_request(CMSG_LOGIN, name));
+        out.writeByte(CMSG_LOGIN);
         out.flush();
-        out.writeObject(new packets.packet_loginData(name, pass));
+        out.writeObject(name);
+        out.flush();
+        out.writeObject(pass);
         out.flush();
 
         in = new ObjectInputStream(socket.getInputStream());
-        systemMSG = (packet_systemMessage) in.readObject();
-        if (systemMSG.getOpcode() == SMSG_LOGIN_SUCCESS) {
-            System.out.println(systemMSG.getOpcode());
-            System.out.println(SMSG_LOGIN_SUCCESS);
-            lol = new FriendListUI("yaya", "yoyo", loginFrame, out);
+        opcode = in.readByte();
+        if (opcode == SMSG_LOGIN_SUCCESS) {
+            clientName = name;
+            this.friendList = new FriendListUI(clientName, loginFrame, out, roomList);
             this.loginFrame = loginFrame;
-            new Connection(in, lol, name, lol).start();
-            return true;
-        } else {
-            System.out.println(systemMSG.getOpcode());
-            System.out.println(SMSG_LOGIN_SUCCESS);
-            return false;
+            new Connection(in, friendList, name, friendList).start();
+            this.roomList = roomList;
+            return 1;
+        }else if (opcode == SMSG_MULTI_LOGIN) {
+            return 2;
+        }else{
+            return 0;
         }
 
     }
@@ -73,33 +75,46 @@ public class Connection extends Thread implements Opcode {
     public void run() {
         while (run) {
             try {
-                System.out.println("here0");
-                request = (packet_systemMessage) in.readObject();
-                System.out.println(request.getOpcode());
-                switch (request.getOpcode()) {
+                
+                opcode = in.readByte();
+                switch (opcode) {
                     case SMSG_SEND_ROOMLIST:
-                        System.out.println("here1");
-                        while (!check((packet_roomData) in.readObject())) {
-                            System.out.println("here2");
-                            System.out.println(aa);
-                            lol.updateList(aa);
+                        roomList.clearRoomList();
+                        boolean run2 = true;
+                        while (run2) {
+                            roomData = (packet_roomData) in.readObject();
+                            if(roomData.getName()==null)
+                            {
+                                run2 = false;
+                                this.friendList.updateList();
+                            }else
+                            {
+                              room room = new room(roomData.getName(), roomData.getDescription(), roomData.isIsPrivate());
+                              roomList.insertRoomToTheFirst(room);
+                            }
                         }
                         break;
 
                     case SMSG_JOINROOM_SUCCESS:
-                        System.out.println("herro0o");
-                        chatUI = new chatUI("o0o", lol, out, clientName);
+                        chatUI = new chatUI(this.roomName, friendList, out, clientName);
                         break;
 
                     case SMSG_LEAVEROOM_SUCCESS:
-                        System.out.println("leave room sucess");
-                        lol = new FriendListUI("yaya", "yoyo", loginFrame, out);
+                        friendList = new FriendListUI(clientName, loginFrame, out, roomList);
                         break;
 
-                    case CMSG_SENDGROUPMESSAGE:
+                    case MSG_SENDGROUPMESSAGE:
                         clientMSG = (packet_clientMessage) in.readObject();
-                        display(clientMSG.getName() + ": " + clientMSG.getMessage());
+                        display(clientMSG.getTime(),clientMSG.getName(),clientMSG.getMessage());
                         System.out.println(clientMSG.getName() + ": " + clientMSG.getMessage());
+                        break;
+                        
+                    case SMSG_CREATEROOM_SUCCESS:
+                        createRoomFrame.respondBox(1);
+                        break;
+                        
+                    case SMSG_MULTI_CREATEROOM:
+                        createRoomFrame.respondBox(0);
                         break;
 
                     default:
@@ -109,7 +124,7 @@ public class Connection extends Thread implements Opcode {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-                LoginUI frame = new LoginUI(clientName);
+                LoginUI frame = new LoginUI(clientName, roomList);
                 frame.setSize(300, 500);
                 frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
                 frame.setLocationRelativeTo(null);
@@ -121,28 +136,48 @@ public class Connection extends Thread implements Opcode {
     }
 
     public void leaveRoom() throws IOException {
-        out.writeObject(new packet_request(CMSG_LEAVEROOM, clientName));
+        out.writeByte(CMSG_LEAVEROOM);
+        out.flush();
     }
 
     public void logout() throws IOException {
-        out.writeObject(new packet_request(CMSG_LOGOUT, clientName));
+        out.writeByte(CMSG_LOGOUT);
+        out.flush();
     }
 
-    public void display(String aaa) {
-        chatUI.txtOutput.append(aaa);
+    public void display(String aaa, String bbb, String ccc) {
+        ccc = ccc.replaceAll("\n", "\n     ");
+        chatUI.txtOutput.append(String.format("[%s]%s says:\n", aaa,bbb));
+        chatUI.txtOutput.append(String.format("     %s\n", ccc));
     }
 
-    public boolean check(packet_roomData a) {
-        if (a.isEmpty()) {
-            aa = null;
+    public boolean check(packet_roomData rd) {
+        System.out.println(rd.getName());
+        if (rd==null) {
+            roomData = null;
         } else {
-            aa = a.getName();
+            roomData = rd;
+            roomList.insertRoomToTheFirst(rd.getName(), rd.getDescription(), rd.isIsPrivate());
         }
-        return a.isEmpty();
+        return (rd!=null);
     }
 
     public void joinRoom(ObjectOutputStream os, String roomname) throws IOException {
-        os.writeObject(new packet_request(CMSG_JOINROOM, clientName));
-        os.writeObject(new packet_roomData(roomname, null));
+        os.writeByte(CMSG_JOINROOM);
+        os.flush();
+        os.writeObject(roomname);
+        os.flush();
+    }
+    
+    public void joinSuccess(String name) throws IOException {
+        this.roomName = name;
+    }
+    
+    public void createroom(){
+        createRoomFrame = new CreateRoomUI(this.out);
+        createRoomFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        createRoomFrame.setLocationRelativeTo(null);
+        createRoomFrame.setResizable(false);
+        createRoomFrame.setVisible(true);
     }
 }

@@ -2,31 +2,27 @@ package packets;
 
 import java.io.Serializable;
 
-public class packet_request implements Serializable {
+public class packet_newRoom implements Serializable {
 
-    private byte opcode;
     private String name;
-    private String time;
+    private String Description;
+    private String Question;
+    private String Answer;
 
-    public packet_request(byte opcode, String name) {
-        this.opcode = opcode;
+    public packet_newRoom(String name, String des, String ques, String ans) {
         this.name = name;
+        this.Description = des;
+        this.Question = ques;
+        this.Answer = ans;
     }
 
-    /**
-     * @return the opcode
-     */
-    public byte getOpcode() {
-        return opcode;
+    public packet_newRoom(String name, String des) {
+        this.name = name;
+        this.Description = des;
+        this.Question = null;
+        this.Answer = null;
     }
-
-    /**
-     * @param opcode the opcode to set
-     */
-    public void setOpcode(byte opcode) {
-        this.opcode = opcode;
-    }
-
+        
     /**
      * @return the name
      */
@@ -35,24 +31,23 @@ public class packet_request implements Serializable {
     }
 
     /**
-     * @param name the name to set
+     * @return the Description
      */
-    public void setName(String name) {
-        this.name = name;
+    public String getDescription() {
+        return Description;
     }
 
     /**
-     * @return the time
+     * @return the Question
      */
-    public String getTime() {
-        return time;
+    public String getQuestion() {
+        return Question;
     }
 
     /**
-     * @param time the time to set
+     * @return the Answer
      */
-    public void setTime(String time) {
-        this.time = time;
+    public String getAnswer() {
+        return Answer;
     }
-
 }
