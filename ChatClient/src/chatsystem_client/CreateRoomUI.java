@@ -91,6 +91,7 @@ public class CreateRoomUI extends JFrame implements Opcode, ActionListener
         if (e.getSource().equals(buttonBack))
         {
             dispose();
+            return;
         }
         
         if(e.getSource().equals(buttonCreate))

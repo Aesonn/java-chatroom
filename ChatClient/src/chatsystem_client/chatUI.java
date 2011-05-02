@@ -95,6 +95,53 @@ public class chatUI extends JFrame implements Opcode
                     txtInput.setText("");
                     return;
                 }
+                
+                if (txtInput.getText().trim().equals("/who"))
+                {
+                    try {
+                        new Connection().sendRequestsameRoomClient(out);
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }
+                    txtInput.setText("");
+                }
+                else if(txtInput.getText().startsWith("/w "))
+                {
+                    try
+                    {
+                    String[] whisper = txtInput.getText().substring(3).split(" " , 2);
+                    if(!whisper[0].isEmpty())
+                    {
+
+                        System.out.println(whisper[0]);   
+                    }
+                    if(!whisper[1].isEmpty())
+                    {
+                        System.out.println(whisper[1]);
+                    }
+                    if(whisper[0].equals(clientName))
+                    {
+                            cannotWhisperSelf();
+                    }
+                    else
+                    {
+                    out.writeByte(MSG_WHISPERMESSAGE);
+                    out.flush();
+                    out.writeObject(whisper[0]);
+                    out.flush();
+                    out.writeObject(new packet_clientMessage(clientName,whisper[0].trim()));
+                    out.flush();
+                    }
+                    } catch (IOException ex) {
+                        ex.printStackTrace();
+                    }catch(ArrayIndexOutOfBoundsException ex)
+                    {
+                        wrongCommand();
+                    }
+                    txtInput.setText("");
+                }
+                else
+                {
                 try {
                     out.writeByte(MSG_SENDGROUPMESSAGE);
                     out.flush();
@@ -105,7 +152,20 @@ public class chatUI extends JFrame implements Opcode
                 }
                 txtInput.setText("");
             }
+            }
                 
         }
     };
+    
+    public void wrongCommand(){
+        JOptionPane.showMessageDialog(this, "Wrong command...", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    public void wrongTarget(){
+        JOptionPane.showMessageDialog(this, "This room don't have this people.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    
+    public void cannotWhisperSelf(){
+        JOptionPane.showMessageDialog(this, "You cannot whisper your self.", "Error", JOptionPane.ERROR_MESSAGE);
+    }
 }

@@ -6,11 +6,11 @@ import java.io.ObjectOutputStream;
 import packets.packet_newRoom;
 import packets.packet_roomData;
 
-public class clientListStore implements Opcode{
+public class roomList implements Opcode{
 
-    private clientList first;
+    private room first;
 
-    public clientListStore(){
+    public roomList(){
         this.first = null;
     }
 
@@ -18,8 +18,8 @@ public class clientListStore implements Opcode{
         return (first==null);
     }
 
-    public clientList findClientList(String name){
-        clientList current = first;
+    public room findClientList(String name){
+        room current = first;
         while(current.getRoomName().compareTo(name)!=0)
         {
             if(current.next == null)
@@ -31,7 +31,7 @@ public class clientListStore implements Opcode{
     }
 
     public boolean isExist(String name){
-        clientList current = findClientList(name);
+        room current = findClientList(name);
         if(current != null)
             return true;
         else
@@ -39,26 +39,26 @@ public class clientListStore implements Opcode{
     }
 
     public void insertClientListToTheFirst(String name, String des){
-        clientList newClientList = new clientList(name, des);
+        room newClientList = new room(name, des);
         newClientList.next = first;
         first = newClientList;
     }
     
     public void insertClientListToTheFirst(packet_newRoom newRoom){
-        clientList newClientList = new clientList(newRoom);
+        room newClientList = new room(newRoom);
         newClientList.next = first;
         first = newClientList;
     }
 
     public void insertClientListToTheFirst(String name, String des, String ques, String answ){
-        clientList newUserList = new clientList(name, des, ques, answ);
+        room newUserList = new room(name, des, ques, answ);
         newUserList.next = first;
         first = newUserList;
     }
 
-     public clientList removeClientList(String name){
-        clientList current = first;
-        clientList previous = first;
+     public room removeClientList(String name){
+        room current = first;
+        room previous = first;
         while(current.getRoomName().compareTo(name)!=0)
         {
             if(current.next == null)
@@ -76,8 +76,8 @@ public class clientListStore implements Opcode{
         return current;
     }
 
-     public clientList checkClient(String name){
-        clientList current = first;
+     public room checkClient(String name){
+        room current = first;
         while(current != null)
         {
             if(current.findClient(name)!=null)
@@ -96,13 +96,12 @@ public class clientListStore implements Opcode{
      }
 
      public void sendAvailableRoom(ObjectOutputStream os, Thread t) throws IOException, InterruptedException{
-         clientList current = first;
+         room current = first;
          os.writeByte(SMSG_SEND_ROOMLIST);
          os.flush();
          while(current != null)
          {
              os.writeObject(new packet_roomData(current.getRoomName(), current.getDescription(), (current.getQuestion()!=null)));
-             System.out.println(current.getRoomName()+"---o0o");
              os.flush();
              
              t.sleep(10);

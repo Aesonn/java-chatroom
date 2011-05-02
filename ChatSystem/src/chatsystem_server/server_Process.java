@@ -1,7 +1,5 @@
 package chatsystem_server;
 
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import packets.Opcode;
 import packets.packet_clientMessage;
 import java.io.IOException;
@@ -10,7 +8,6 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.text.SimpleDateFormat;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -26,46 +23,30 @@ public class server_Process extends Thread implements Opcode{
     private ObjectInputStream clientInput;
     private ObjectOutputStream clientOutput;
     //storage
-    private clientListStore clientListStore;
-    private clientList clientList;
-    private clientList noRoomClientList;;
-    //packets
-    private Byte opcode;
-    private packet_clientMessage clientMSG;
-    private packet_newRoom newRoom;
+    private roomList roomList;
+    private room clientList;
+    private room noRoomClientList;
     //sql
-    private static Connection connection;
+    private static Connection mysqlConnection;
     private Statement sql;
 
-    public server_Process(Socket s, clientListStore cls, clientList cl, clientList cl2) throws IOException {
+    public server_Process(Socket s, roomList rList, room r1, room r2, Connection mysqlCon) throws IOException {
         this.socket = s;
-        this.clientListStore = cls;
-        this.clientList = cl;
-        this.noRoomClientList = cl2;
+        this.mysqlConnection = mysqlCon;
+        this.roomList = rList;
+        this.clientList = r1;
+        this.noRoomClientList = r2;
         this.clientInput = new ObjectInputStream(socket.getInputStream());
         this.clientOutput = new ObjectOutputStream(socket.getOutputStream());
         this.clientName = "GUEST";
         this.run = true;
     }
 
-//*****************************************mysql database driver******************************************************************************************
-    public static Connection dataAccess() throws SQLException {
-        try {
-            Class.forName("com.mysql.jdbc.Driver");
-
-            connection = DriverManager.getConnection("jdbc:mysql://localhost/chatroom", "root", "aaa");
-
-        } catch (ClassNotFoundException ex) {
-            ex.printStackTrace();
-        }
-        return connection;
-    }
-
 //*****************************************check username and password from database**********************************************************************
     public int checkLogin(String name, String password) throws SQLException {
 
         int login = 0;
-        Connection con = dataAccess();
+        Connection con = mysqlConnection;
         sql = con.createStatement();
         String query = "select * from client where name='" + name + "'and password = '" + password + "'";
         ResultSet result = sql.executeQuery(query);
@@ -89,7 +70,7 @@ public class server_Process extends Thread implements Opcode{
         clientList.insertClientToTheFirst(name, os);
         noRoomClientList.insertClientToTheFirst(name, os);
         
-        Connection con = dataAccess();
+        Connection con = mysqlConnection;
         sql = con.createStatement();
         String query = "UPDATE client SET online = 1 WHERE name ='"+name+"'"; 
         sql.executeUpdate(query);
@@ -97,21 +78,21 @@ public class server_Process extends Thread implements Opcode{
     
     public void logout(String name){
         try {
-            if(clientListStore.checkClient(name)==null)
+            if(roomList.checkClient(name)==null)
             {
                 noRoomClientList.removeClient(name);
                 clientList.removeClient(name);
             }else
             {
-                clientListStore.checkClient(name).removeClient(name);
+                roomList.checkClient(name).removeClient(name);
                 clientList.removeClient(name);
             }
-            Connection con = dataAccess();
+            Connection con = mysqlConnection;
             sql = con.createStatement();
             String query = "UPDATE client SET online = 0 WHERE name ='"+name+"'"; 
             sql.executeUpdate(query);
         } catch (SQLException ex) {
-            Logger.getLogger(server_Process.class.getName()).log(Level.SEVERE, null, ex);
+            ex.printStackTrace();
         }
     }
     
@@ -137,14 +118,26 @@ public class server_Process extends Thread implements Opcode{
 //*****************************************process all packet_request*************************************************************************************
     @Override
     public void run(){
+        Byte opcode;
+        String username;
+        String password;
+        String roomName;
+        String answer;
+        String sameRoomClient;
+        String whisperTargetName;
+        client whisperTarget;
+        packet_clientMessage clientMSG;
+        packet_clientMessage whisperMSG;
+        packet_newRoom newRoom;
+        
        while(run) {
            try{
-               opcode = clientInput.readByte();
+               opcode = this.clientInput.readByte();
              switch(opcode)
              {
                  case CMSG_LOGIN:
-                     String username = (String) clientInput.readObject();
-                     String password = (String) clientInput.readObject();
+                     username = (String) this.clientInput.readObject();
+                     password = (String) this.clientInput.readObject();
                      
                      int result = checkLogin(username, password);
                      if(result == 1)
@@ -174,28 +167,53 @@ public class server_Process extends Thread implements Opcode{
                      break;
 
                  case MSG_SENDGROUPMESSAGE:
-                     clientMSG = (packet_clientMessage) clientInput.readObject();
+                     clientMSG = (packet_clientMessage) this.clientInput.readObject();
                      clientMSG.setTime(getTime());
-                     clientListStore.checkClient(clientMSG.getName()).sendGroupMessage(MSG_SENDGROUPMESSAGE, clientMSG);
+                     roomList.checkClient(clientMSG.getName()).sendGroupMessage(MSG_SENDGROUPMESSAGE, clientMSG);
                      break;
 
                  case CMSG_JOINROOM:
-                     String roomName = (String) clientInput.readObject();
-                     if(clientListStore.findClientList(roomName).getQuestion()==null){
+                     roomName = (String) this.clientInput.readObject();
+                     if(roomList.findClientList(roomName).getQuestion()==null){
                          noRoomClientList.removeClient(this.clientName);
-                         clientListStore.findClientList(roomName).insertClientToTheFirst(this.clientName, this.clientOutput);
+                         roomList.findClientList(roomName).insertClientToTheFirst(this.clientName, this.clientOutput);
                          this.clientOutput.writeByte(SMSG_JOINROOM_SUCCESS);
                          this.clientOutput.flush();
                      }
                      else
                      {
+                         this.clientOutput.writeByte(SMSG_SEND_QUESTION);
+                         this.clientOutput.flush();
+                         this.clientOutput.writeObject(roomList.findClientList(roomName).getQuestion());
+                         this.clientOutput.flush();
                          
+                         opcode = this.clientInput.readByte();
+                         if(opcode == CMSG_SEND_ANSWER)
+                         {
+                             answer = (String) this.clientInput.readObject();
+                             if(roomList.findClientList(roomName).getAnswer().compareTo(answer)==0)
+                             {
+                                 noRoomClientList.removeClient(this.clientName);
+                                 roomList.findClientList(roomName).insertClientToTheFirst(this.clientName, this.clientOutput);
+                                 this.clientOutput.writeByte(SMSG_JOINROOM_SUCCESS);
+                                 this.clientOutput.flush();
+                             }
+                             else
+                             {
+                                 this.clientOutput.writeByte(SMSG_JOINROOM_FAILED);
+                                 this.clientOutput.flush();
+                             }
+                             
+                         }
+                         else if(opcode == CMSG_CANCEL_ANSWER)
+                         {
+                         } 
                      }
                      break;
 
                  case CMSG_LEAVEROOM:
-                     if(clientListStore.checkClient(this.clientName)!=null)
-                         clientListStore.checkClient(this.clientName).removeClient(this.clientName);
+                     if(roomList.checkClient(this.clientName)!=null)
+                         roomList.checkClient(this.clientName).removeClient(this.clientName);
                      noRoomClientList.insertClientToTheFirst(this.clientName, this.clientOutput);
                      this.clientOutput.writeByte(SMSG_LEAVEROOM_SUCCESS);
                      this.clientOutput.flush();
@@ -203,16 +221,16 @@ public class server_Process extends Thread implements Opcode{
                      break;
 
                  case CMSG_CREATEROOM:
-                     newRoom = (packet_newRoom) clientInput.readObject();
-                     if(clientListStore.checkClient(newRoom.getName())==null)
+                     newRoom = (packet_newRoom) this.clientInput.readObject();
+                     if(roomList.checkClient(newRoom.getName())==null)
                      {
-                         clientListStore.insertClientListToTheFirst(newRoom);
+                         roomList.insertClientListToTheFirst(newRoom);
                          
                          this.clientOutput.writeByte(SMSG_CREATEROOM_SUCCESS);
                          this.clientOutput.flush();
                           
                          noRoomClientList.removeClient(this.clientName);
-                         clientListStore.findClientList(newRoom.getName()).insertClientToTheFirst(this.clientName, this.clientOutput);
+                         roomList.findClientList(newRoom.getName()).insertClientToTheFirst(this.clientName, this.clientOutput);
                          this.clientOutput.writeByte(SMSG_JOINROOM_SUCCESS);
                          this.clientOutput.flush();
                          
@@ -221,6 +239,34 @@ public class server_Process extends Thread implements Opcode{
                      else
                      {
                          this.clientOutput.writeByte(SMSG_MULTI_CREATEROOM);
+                         this.clientOutput.flush();
+                     }
+                     break;
+                     
+                 case CMSG_REQUEST_ROOMCLIENT:
+                     sameRoomClient = roomList.checkClient(this.clientName).getSameRoomClient();
+                     this.clientOutput.writeByte(SMSG_SEND_ROOMCLIENT);
+                     this.clientOutput.flush();
+                     this.clientOutput.writeObject(sameRoomClient);
+                     this.clientOutput.flush();
+                     break;
+                     
+                 case MSG_WHISPERMESSAGE:
+                     whisperTargetName = (String) this.clientInput.readObject();
+                     whisperMSG = (packet_clientMessage) this.clientInput.readObject();
+                     whisperMSG.setTime(getTime());
+                     
+                     whisperTarget = roomList.checkClient(this.clientName).findClient(whisperTargetName);
+                     if(whisperTarget != null)
+                     {
+                     whisperTarget.getClientOutput().writeByte(MSG_WHISPERMESSAGE);
+                     whisperTarget.getClientOutput().flush();
+                     whisperTarget.getClientOutput().writeObject(whisperMSG);
+                     whisperTarget.getClientOutput().flush();
+                     }
+                     else
+                     {
+                         this.clientOutput.writeByte(MSG_WHISPERMESSAGE_FAILED);
                          this.clientOutput.flush();
                      }
                      break;
@@ -239,6 +285,6 @@ public class server_Process extends Thread implements Opcode{
     }
 
     public void refreshRoomList() throws IOException, InterruptedException{
-        noRoomClientList.sendRoomList(clientListStore, this.currentThread());
+        noRoomClientList.sendRoomList(roomList, this.currentThread());
     }
 }

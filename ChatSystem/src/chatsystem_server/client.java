@@ -15,10 +15,6 @@ public class client {
         this.clientOutput = output;
     }
 
-    public client(String name){
-        this.clientName = name;
-    }
-
     public String getClientName() {
         return clientName;
     }

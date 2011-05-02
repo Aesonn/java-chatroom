@@ -7,7 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import packets.packet_newRoom;
 
-public class clientList {
+public class room {
 
     private String roomName;
     private String description;
@@ -15,16 +15,16 @@ public class clientList {
     private String answer;
     private String time;
     private int size;
-    private client first;
-    public  clientList next;
     
-    //time
+    private client first;
+    public  room next;
+
     String DATE_FORMAT = "kk:mm:ss, dd/MM/yyyy";
     SimpleDateFormat sdf = new SimpleDateFormat(DATE_FORMAT);
 
-    public clientList(String name, String des){
-        Calendar c1 = Calendar.getInstance();
-        String nowtime = sdf.format(c1.getTime());
+    public room(String name, String des){
+        Calendar c = Calendar.getInstance();
+        String nowtime = sdf.format(c.getTime());
         
         this.roomName = name;
         this.description = des;
@@ -34,7 +34,7 @@ public class clientList {
         this.first = null;
     }
 
-    public clientList(packet_newRoom newRoom){
+    public room(packet_newRoom newRoom){
         Calendar c1 = Calendar.getInstance();
         String nowtime = sdf.format(c1.getTime());
         
@@ -46,7 +46,7 @@ public class clientList {
         this.first = null;
     }
     
-    public clientList(String name, String des, String ques, String answ){
+    public room(String name, String des, String ques, String answ){
         Calendar c1 = Calendar.getInstance();
         String nowtime = sdf.format(c1.getTime());
         
@@ -60,6 +60,10 @@ public class clientList {
 
     public String getRoomName() {
         return roomName;
+    }
+    
+    public String getDescription() {
+        return description;
     }
 
     public String getQuestion() {
@@ -89,12 +93,6 @@ public class clientList {
         client newClient = new client(name, nowtime, output);
         size++;
         
-        newClient.next = first;
-        first = newClient;
-    }
-
-    public void insertClientToTheFirst(String name){
-        client newClient = new client(name);
         newClient.next = first;
         first = newClient;
     }
@@ -135,7 +133,6 @@ public class clientList {
 
     public client findClient(String name){
         client current = first;
-        System.out.println("current1");
         if(first == null){
             return null;
         }
@@ -143,7 +140,6 @@ public class clientList {
         {
         while(current.getClientName().compareTo(name)!=0)
         {
-            System.out.println("current2");
             if(current.next == null)
                 return null;
             else
@@ -165,7 +161,7 @@ public class clientList {
             return false;
     }
 
-    public String sendSameRoomClient(){
+    public String getSameRoomClient(){
          client current = first;
          String List = "Online user:\n";
          int i = 1;
@@ -178,19 +174,12 @@ public class clientList {
          return List;
      }
 
-    public void sendRoomList(clientListStore cls, Thread t) throws IOException, InterruptedException{
+    public void sendRoomList(roomList cls, Thread t) throws IOException, InterruptedException{
         client current = first;
          while(current != null)
          {
              cls.sendAvailableRoom(current.getClientOutput(), t);
              current = current.next;
          }
-    }
-
-    /**
-     * @return the description
-     */
-    public String getDescription() {
-        return description;
     }
 }

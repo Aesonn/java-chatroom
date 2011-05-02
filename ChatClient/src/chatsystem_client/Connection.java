@@ -32,6 +32,7 @@ public class Connection extends Thread implements Opcode {
     private Byte opcode;
     static roomList roomList;
     static CreateRoomUI createRoomFrame;
+    private answerUI answerUI;
 
     public Connection(ObjectInputStream in, FriendListUI friendList, String name, JFrame jf) {
         this.in = in;
@@ -105,7 +106,7 @@ public class Connection extends Thread implements Opcode {
 
                     case MSG_SENDGROUPMESSAGE:
                         clientMSG = (packet_clientMessage) in.readObject();
-                        display(clientMSG.getTime(),clientMSG.getName(),clientMSG.getMessage());
+                        displayMSG(clientMSG.getTime(),clientMSG.getName(),clientMSG.getMessage());
                         System.out.println(clientMSG.getName() + ": " + clientMSG.getMessage());
                         break;
                         
@@ -117,6 +118,31 @@ public class Connection extends Thread implements Opcode {
                         createRoomFrame.respondBox(0);
                         break;
 
+                    case SMSG_SEND_QUESTION:
+                        String question = (String) in.readObject();
+                        answerUI = new answerUI(question, out);
+                        break;       
+                        
+                    case SMSG_JOINROOM_FAILED:
+                        answerUI.failToJoinRoom();
+                        break;     
+                        
+                    case SMSG_SEND_ROOMCLIENT:
+                        String sameRoomClient = (String) in.readObject();
+                        chatUI.txtOutput.append(sameRoomClient);
+                        chatUI.txtOutput.append("\n");
+                        break;                                            
+
+                    case MSG_WHISPERMESSAGE:
+                        clientMSG = (packet_clientMessage) in.readObject();
+                        displayWhisperMSG(clientMSG.getTime(),clientMSG.getName(),clientMSG.getMessage());
+                        System.out.println(clientMSG.getName() + ": " + clientMSG.getMessage());
+                        break;
+                        
+                    case MSG_WHISPERMESSAGE_FAILED:
+                        chatUI.wrongTarget();
+                        break;
+                        
                     default:
                         System.out.print("unknown opcode");
                         break;
@@ -145,10 +171,18 @@ public class Connection extends Thread implements Opcode {
         out.flush();
     }
 
-    public void display(String aaa, String bbb, String ccc) {
+    public void displayMSG(String aaa, String bbb, String ccc) {
         ccc = ccc.replaceAll("\n", "\n     ");
         chatUI.txtOutput.append(String.format("[%s]%s says:\n", aaa,bbb));
         chatUI.txtOutput.append(String.format("     %s\n", ccc));
+        chatUI.txtOutput.append("\n");
+    }
+    
+    public void displayWhisperMSG(String aaa, String bbb, String ccc) {
+        ccc = ccc.replaceAll("\n", "\n     ");
+        chatUI.txtOutput.append(String.format("[%s]%s whisper you:\n", aaa,bbb));
+        chatUI.txtOutput.append(String.format("     %s\n", ccc));
+        chatUI.txtOutput.append("\n");
     }
 
     public boolean check(packet_roomData rd) {
@@ -179,5 +213,22 @@ public class Connection extends Thread implements Opcode {
         createRoomFrame.setLocationRelativeTo(null);
         createRoomFrame.setResizable(false);
         createRoomFrame.setVisible(true);
+    }
+    
+    public void sendAnswer(ObjectOutputStream os, String ans) throws IOException{
+        os.writeByte(CMSG_SEND_ANSWER);
+        os.flush();
+        os.writeObject(ans);
+        os.flush();
+    }
+    
+    public void cancelQuestion(ObjectOutputStream os) throws IOException{
+        os.writeByte(CMSG_CANCEL_ANSWER);
+        os.flush();
+    }
+    
+    public void sendRequestsameRoomClient(ObjectOutputStream os) throws IOException{
+        os.writeByte(CMSG_REQUEST_ROOMCLIENT);
+        os.flush();
     }
 }
