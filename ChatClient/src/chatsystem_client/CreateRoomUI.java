@@ -99,31 +99,31 @@ public class CreateRoomUI extends JFrame implements Opcode, ActionListener
             try {
                 out.writeByte(CMSG_CREATEROOM);
                 out.flush();
-                if(!textRoomname.getText().equals("")&&!textDescription.getText().equals("")&&!textQuestion.getText().equals("")&&!textAnswer.getText().equals(""))
+                if(!textRoomname.getText().trim().equals("")&&!textDescription.getText().trim().equals("")&&!textQuestion.getText().trim().equals("")&&!textAnswer.getText().trim().equals(""))
                 {
-                    out.writeObject(new packet_newRoom(textRoomname.getText(), textDescription.getText(), textQuestion.getText(), textAnswer.getText()));
+                    out.writeObject(new packet_newRoom(textRoomname.getText().trim(), textDescription.getText().trim(), textQuestion.getText().trim(), textAnswer.getText().trim()));
                     out.flush();     
                 }
-                else if((!textRoomname.getText().equals("")&&!textDescription.getText().equals("")))
+                else if((!textRoomname.getText().trim().equals("")&&!textDescription.getText().trim().equals("")))
                 {
-                    out.writeObject(new packet_newRoom(textRoomname.getText(), textDescription.getText()));
+                    out.writeObject(new packet_newRoom(textRoomname.getText().trim(), textDescription.getText().trim()));
                     out.flush();     
                 }
                 else
                 {
-                    if(textRoomname.getText().equals(""))
+                    if(textRoomname.getText().trim().equals(""))
                     {
                         JOptionPane.showMessageDialog(this, "Please enter roomname.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
-                    else if(textDescription.getText().equals(""))
+                    else if(textDescription.getText().trim().equals(""))
                     {
                         JOptionPane.showMessageDialog(this, "Please enter description.", "Error", JOptionPane.ERROR_MESSAGE);   
                     }
-                    else if(textQuestion.getText().equals(""))
+                    else if(textQuestion.getText().trim().equals(""))
                     {
                         JOptionPane.showMessageDialog(this, "Please enter question", "Error", JOptionPane.ERROR_MESSAGE);
                     }
-                    else if(textAnswer.getText().equals(""))
+                    else if(textAnswer.getText().trim().equals(""))
                     {
                         JOptionPane.showMessageDialog(this, "Please enter answer.", "Error", JOptionPane.ERROR_MESSAGE);
                     }
